@@ -96,17 +96,54 @@ const generarReporte = async (obj) => {
   return reporte;
 }
 
+const crearTarea = async (nuevaTarea, listaActual) => {
+  try {
+    const camposObligatorios = ["id", "title", "status", "priority"];
+    
+    for (const campo of camposObligatorios) {
+      if (!nuevaTarea[campo]) {
+        throw new Error(`El campo '${campo}' es obligatorio para crear la tarea.`);
+      }
+    }
 
 
+    await generarLatencia();
+
+    listaActual.tasks.push(nuevaTarea);
+
+    console.log(`--------------------------------------------------`);
+    console.log(`Tarea "${nuevaTarea.title}" añadida correctamente.`);
+    console.log(`--------------------------------------------------`);
+    return listaActual;
+
+  } catch (error) {
+    throw error; 
+  }
+};
 
 
 
 //Implementación secuencial
 
 const main = async () =>{
-  const data = await conectarBd();
+  let data = await conectarBd();
   const reporte = await generarReporte(data);
   console.log(reporte);
+  await new Promise(resolve => setTimeout(resolve, 2000));
+  console.log("Añadiendo nueva tarea");
+
+  const tareaNueva = {
+      id: "tk-104",
+      title: "Configurar Servidor de Producción",
+      description: "Subir la App a AWS.",
+      status: "pending",
+      priority: "high",
+      createdAt: new Date().toISOString()
+    };
+
+  data = await crearTarea(tareaNueva, data);
+
+
 }
 
 
