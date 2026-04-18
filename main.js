@@ -42,10 +42,11 @@ const apiGetTasksByUserId = async (userId) => {
 // 3) Crear tarea
 const apiCreateTask = async ({ userId, title }) => {
   await wait(300);
-  if (!title || title.trim().length < 3) {
+  if (!title) {
+    console.log(title);
     throw new Error('Título inválido (mínimo 3 caracteres)');
   }
-  
+
   const user = await apiGetUserById(userId);
   if (!user) {
     throw new Error('No puedes crear tareas para un usuario inexistente');
@@ -57,56 +58,68 @@ const apiCreateTask = async ({ userId, title }) => {
     done: false
   };
   db.tasks.push(newTask);
+  console.log(`Se ha creado la tarea: "${newTask.title}" exitosamente`);
+
   return newTask;
 };
 
 // 4) Completar tarea
 const apiCompleteTask = async (taskId) => {
-  // TODO:
-  // - Esperar 300ms
-  // - Buscar la tarea en db.tasks por id
-  // - Si no existe => lanzar Error('Tarea no encontrada')
-  // - Si existe => cambiar done a true
-  // - Retornar la tarea actualizada
+  await wait(300);
+  const task = db.tasks.find(task => task.id === taskId);
+  if (!task) {
+    throw new Error('Tarea no encontrada');
+  }
+  task.done = true;
+  console.log(`¡Felicidades! 
+    Se ha completado la tarea: "${task.title}" exitosamente`);
+  return task;
 };
 
-console.log(db.tasks);
-
-console.log(db.tasks);
 
 // ==================== REPORTES (COMPLETAR) ====================
 
-// Construye resumen de un usuario
 const buildUserSummary = async (userId) => {
-  // TODO:
-  // - Obtener el usuario con apiGetUserById(userId)
-  // - Obtener tareas con apiGetTasksByUserId(userId)
-  // - Calcular:
-  //   - totalTasks = tareas.length
-  //   - done = cuántas tienen done === true
-  //   - pending = totalTasks - done
-  // - Retornar un objeto con la forma:
-  //   {
-  //     user: user.name,
-  //     totalTasks,
-  //     done,
-  //     pending,
-  //     tasks: [{ id, title, done }, ...]
-  //   }
+  const tasks = await apiGetTasksByUserId(userId);
+  const user = await apiGetUserById(userId);
+
+  //Creacion del reporte de usuuario
+  const totalTasks = tasks.length;
+  const done = tasks.filter(task => task.done).length;
+  const pending = totalTasks - done;
+
+  const report = {
+    user: user.name,
+    totalTasks,
+    done,
+    pending,
+    tasks: tasks.map(task => ({ id: task.id, title: task.title, done: task.done }))
+  };
+
+  return report;
 };
 
 // ==================== MAIN FLOW (COMPLETAR) ====================
 
 const main = async () => {
-  // TODO:
-  // - Envolver todo en try/catch
-  // - Elegir un userId (por ejemplo 1)
-  // - Obtener summaryBefore (buildUserSummary)
-  // - Crear una nueva tarea (apiCreateTask)
-  // - Completar esa tarea (apiCompleteTask)
-  // - Obtener summaryAfter (buildUserSummary)
-  // - Construir report final
-  // - Imprimir el reporte con JSON.stringify(report, null, 2)
+  userId = 1;
+  try {
+    const summaryBefore = await buildUserSummary(userId);
+    console.log(summaryBefore);
+
+
+    const taskPrueba = { userId: 1, title: "Completar documentación de Expeddi" };
+    const taskCreada = await apiCreateTask(taskPrueba);
+
+    await apiCompleteTask(taskCreada.id);
+    
+    const summaryAfter = await buildUserSummary(userId);
+    console.log(JSON.stringify(summaryAfter, null, 2));
+
+
+  } catch (error) {
+    throw error;
+  }
 };
 
 main();
